@@ -1,0 +1,5 @@
+secrets
+srcs/.env
+srcs/requirements/frontend/tools/react/node_modules
+srcs/requirements/backend/tools/fastify/node_modules
+srcs/requirements/backend/tools/express/node_modules

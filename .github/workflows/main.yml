@@ -1,0 +1,40 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Création des fichiers secrets et configuration bidons pour le build
+      - name: Create dummy secrets and env for build
+        run: |
+          mkdir -p secrets script_ssl_generate
+          
+          # Création des secrets
+          touch secrets/mariadb_root_pswd
+          touch secrets/mariadb_user_pswd
+          touch secrets/pub_ssl_key.key
+          touch secrets/priv_ssl_key.crt
+          
+          # Création du script (si nécessaire)
+          touch script_ssl_generate/script.sh
+          chmod +x script_ssl_generate/script.sh
+
+          # Création d'un .env temporaire pour que Docker Compose ait ses variables
+          cat <<EOF > srcs/.env
+          MARIADB_DATABASE=testdb
+          MARIADB_USER=testuser
+          PATH_REACT=./requirements/frontend/tools/react
+          PATH_EXPRESS=./requirements/backend/tools/express
+          PATH_VOL_MARIADB=./data/database
+          EOF
+
+      - name: Build Docker Images
+        run: docker compose -f srcs/docker-compose.yml build

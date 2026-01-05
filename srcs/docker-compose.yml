@@ -1,0 +1,87 @@
+services:
+  react:
+    networks:
+      - net-link
+    build: requirements/frontend
+    secrets:
+      - pub_ssl_key
+      - priv_ssl_key
+    volumes:
+      - front_vol:/app
+      - /app/node_modules
+    ports:
+      - "443:443"
+    image: react:1.0
+    container_name: react
+    restart: unless-stopped
+
+  express:
+    networks:
+      - net-link
+    depends_on:
+      - mariadb
+    secrets:
+      - pub_ssl_key
+      - priv_ssl_key
+    build: requirements/backend
+    command: npm start
+    ports:
+      - "5000:5000"
+    volumes:
+      - back_vol:/app
+      - /app/node_modules
+    image: express:1.0
+    container_name: express
+    restart: unless-stopped
+
+  mariadb:
+    networks:
+      - net-link
+    image: mariadb:latest
+    secrets:
+      - mariadb_root_pswd
+      - mariadb_user_pswd
+    environment:
+      MARIADB_DATABASE: "${MARIADB_DATABASE}"
+      MARIADB_USER: "${MARIADB_USER}"
+      MARIADB_ROOT_PASSWORD: /run/secrets/mariadb_root_pswd
+      MARIADB_PASSWORD: /run/secrets/mariadb_user_pswd
+    volumes:
+      - mariadb_vol:/var/lib/mysql
+    container_name: mariadb
+    restart: unless-stopped
+
+secrets:
+  pub_ssl_key:
+    file: ../secrets/pub_ssl_key.key
+  priv_ssl_key:
+    file: ../secrets/priv_ssl_key.crt
+  mariadb_root_pswd:
+    file: ../secrets/mariadb_root_pswd
+  mariadb_user_pswd:
+    file:  ../secrets/mariadb_user_pswd
+
+volumes:
+  front_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PATH_REACT}
+      o: bind
+
+  back_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PATH_EXPRESS}
+      o: bind
+
+  mariadb_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PATH_VOL_MARIADB}
+      o: bind
+
+networks:
+  net-link:
